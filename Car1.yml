@@ -1,22 +1,5 @@
-esphome:
-  name: car1
-  friendly_name: car1
-  on_boot:
-    priority: 600
-    then:
-      - light.turn_off:
-          id: atom_matrix
-          effect: "Count 0-9"
-          brightness: 50%
 
-esp32:
-  board: esp32dev
-  framework:
-    type: arduino
-  
 
-# Enable logging
-logger:
 
 # I2C bus for VL53L0X (adjust pins if your board uses different pins)
 i2c:
