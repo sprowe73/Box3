@@ -19,7 +19,8 @@ esphome:
   min_version: 2025.2.0
   
 dashboard_import:
-  package_import_url: github://ApolloAutomation/MSR-1/Integrations/ESPHome/MSR-1.yaml
+  package_import_url: github://sprowe73/Box3/MSR-1.yaml
+  
   import_full_config: false
 
 ota:
