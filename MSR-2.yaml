@@ -20,30 +20,27 @@ esphome:
             - lambda: "id(testScript).execute();"
 
   project:
-    name: "ApolloAutomation.MSR-2_BLE"
+    name: "ApolloAutomation.MSR-2"
     version: "${version}"
 
   min_version: 2025.2.0
-
-logger:
   
 dashboard_import:
-  package_import_url: github://sprowe73/box3/MSR-2_BLE.yaml
+  package_import_url: github://ApolloAutomation/MSR-2/Integrations/ESPHome/MSR-2.yaml
   import_full_config: false
-
-wifi:
-  ap:
-    ssid: "Apollo MSR2 Hotspot"
 
 ota:
   - platform: esphome
-    id: ota_esphome
+    id: ota_default
 
-bluetooth_proxy:
-  active: true
-esp32_ble_tracker:
-  scan_parameters:
-    active: false
+wifi:
+
+  power_save_mode: none
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Apollo MSR2 Hotspot"
+
 
 packages:
   core: !include Apollo-Core.yaml

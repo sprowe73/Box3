@@ -1,22 +1,52 @@
-
 substitutions:
+  name: apollo-msr-2
   version:  "25.8.6.1"
   device_description: ${name} made by Apollo Automation - version ${version}.
-
+  
 esp32:
   board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
+
 captive_portal:
 
 web_server:
   port: 80
+  version: 3
 
+globals:
+  - id: button_press_timestamp
+    restore_value: no
+    type: uint32_t
+    initial_value: '0'
+  - id: runTest
+    restore_value: yes
+    type: bool
+    initial_value: "true"
+  - id: testCycleCount
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: dps310Passed
+    restore_value: no
+    type: bool
+    initial_value: "false"
+  - id: ltr390lightPassed
+    restore_value: no
+    type: bool
+    initial_value: "false"
+  - id: ltr390uvindexPassed
+    restore_value: no
+    type: bool
+    initial_value: "false"
+  - id: ld2410Passed
+    restore_value: no
+    type: bool
+    initial_value: "false"
+
+# Enable Home Assistant API
+# Also Add Buzzer Service Connection
 api:
-  on_client_connected:
-    - delay: 1s
-    - light.turn_off: rgb_light
-    - lambda: 'id(cycleCounter) = 30;'
   services:
     - service: play_buzzer
       variables:
@@ -43,16 +73,9 @@ api:
             id: ld2410_radar
             password: !lambda 'return password;'
 
-globals:
-  - id: cycleCounter
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: button_press_timestamp
-    restore_value: no
-    type: uint32_t
-    initial_value: '0'
 
+
+# Set Up Key Ports For Communication
 i2c:
   sda: GPIO1
   scl: GPIO0
@@ -65,6 +88,7 @@ uart:
   parity: NONE
   stop_bits: 1
 
+# Numbers For Configuration
 number:
   - platform: ld2410
     timeout:
@@ -119,23 +143,10 @@ number:
       still_threshold:
         name: g8 still threshold
 
-  - platform: template
-    name: BME280 Humidity Offset
-    id: bme280_humidity_offset
-    restore_value: true
-    initial_value: -18.86
-    min_value: -70.0
-    max_value: 70.0
-    entity_category: "CONFIG"
-    unit_of_measurement: "%"
-    optimistic: true
-    update_interval: never
-    step: 0.1
-    mode: box
 
   - platform: template
-    name: BME280 Temperature Offset
-    id: bme280_temperature_offset
+    name: DPS Temperature Offset
+    id: dps310_temperature_offset
     restore_value: true
     initial_value: 14.54
     min_value: -70.0
@@ -238,6 +249,8 @@ binary_sensor:
     has_still_target:
       name: Radar Still Target
       id: radar_has_still_target
+             
+
   ## Set Up Radar Zones Based On Distance
   - platform: template
     name: "Radar Zone 1 Occupancy"
@@ -282,7 +295,7 @@ binary_sensor:
         return false;
       }
   - platform: gpio
-    pin: 
+    pin:
       number: GPIO9
       inverted: true
       ignore_strapping_warning: true
@@ -294,21 +307,23 @@ binary_sensor:
       then:
         - lambda: |-
             id(button_press_timestamp) = millis();
-            
+
     on_release:
       then:
         - lambda: |-
-            if (millis() - id(button_press_timestamp) >= 5000) {
-              // Remove Wifi
+            if (millis() - id(button_press_timestamp) >= 8000) {
               id(factory_reset_switch).turn_on();
-              
+            }
+            else if (millis() - id(button_press_timestamp) >= 1000) {
+              id(testCycleCount) = 0;
+              id(runTest) = true;
+              id(testScript).execute();
             }
 
 ld2410:
   id: ld2410_radar
 
 sensor:
-
   - platform: internal_temperature
     name: "ESP Temperature"
     id: sys_esp_temperature
@@ -333,7 +348,6 @@ sensor:
               return current_value;
             }
 
-
   - platform: uptime
     name: Uptime
     id: sys_uptime
@@ -354,8 +368,8 @@ sensor:
     update_interval: 60s
     measurement_mode: "periodic"
     i2c_id: bus_a
-    ambient_pressure_compensation_source: bme280pressure
-
+    ambient_pressure_compensation_source: dps310pressure
+    
 
   - platform: ld2410
     moving_distance:
@@ -459,68 +473,66 @@ sensor:
     g0:
       move_energy:
         name: g0 move energy
+        state_class: measurement
       still_energy:
         name: g0 still energy
+        state_class: measurement
     g1:
       move_energy:
         name: g1 move energy
+        state_class: measurement
       still_energy:
         name: g1 still energy
+        state_class: measurement
     g2:
       move_energy:
         name: g2 move energy
+        state_class: measurement
       still_energy:
         name: g2 still energy
+        state_class: measurement
     g3:
       move_energy:
         name: g3 move energy
+        state_class: measurement
       still_energy:
         name: g3 still energy
+        state_class: measurement
     g4:
       move_energy:
         name: g4 move energy
+        state_class: measurement
       still_energy:
         name: g4 still energy
+        state_class: measurement
     g5:
       move_energy:
         name: g5 move energy
+        state_class: measurement
       still_energy:
         name: g5 still energy
+        state_class: measurement
     g6:
       move_energy:
         name: g6 move energy
+        state_class: measurement
       still_energy:
         name: g6 still energy
+        state_class: measurement
     g7:
       move_energy:
         name: g7 move energy
+        state_class: measurement
       still_energy:
         name: g7 still energy
+        state_class: measurement
     g8:
       move_energy:
         name: g8 move energy
+        state_class: measurement
       still_energy:
         name: g8 still energy
-
-  - platform: bme280_i2c
-    id: bme_280
-    temperature:
-      name: "BME280 Temperature"
-      id: bme280temperature
-      filters:
-        - lambda: return x - id(bme280_temperature_offset).state;
-    pressure:
-      name: "BME280 Pressure"
-      id: bme280pressure
-    humidity:
-      name: "BME280 Humidity"
-      id: bme280humidity
-      filters:
-        - lambda: return x - id(bme280_humidity_offset).state;
-    update_interval: 60s
-    i2c_id: bus_a
-    address: 0x76
-
+        state_class: measurement
   
   - platform: ltr390
     id: ltr_390
@@ -571,6 +583,39 @@ sensor:
               return current_value;
             }
 
+  - platform: dps310
+    id: dps_310
+    pressure:
+      name: "DPS310 Pressure"
+      id: dps310pressure
+      filters:
+        - lambda: |-
+            static float last_reported_value = 0.0;
+            float current_value = x;
+
+            // Check if the reduce_db_reporting switch is on
+            if (id(reduce_db_reporting).state) {
+              // Apply delta filter: only report if the value has changed by 2 or more
+              if (abs(current_value - last_reported_value) >= 5.0) {
+                last_reported_value = current_value;  // Update the last reported value
+                return current_value;
+              } else {
+                // Return the last reported value without updating if change is less than 2
+                return {};  // Discard the update
+              }
+            } else {
+              // If reduce_db_reporting is off, report the current value normally
+              last_reported_value = current_value;
+              return current_value;
+            }
+    temperature:
+      name: "DPS310 Temperature"
+      id: dps310temperature
+      filters:
+        - lambda: return x - id(dps310_temperature_offset).state;
+    update_interval: 30s
+    i2c_id: bus_a
+
   
 light:
   - platform: esp32_rmt_led_strip
@@ -579,8 +624,7 @@ light:
     pin: GPIO3
     default_transition_length: 0s
     chipset: WS2812
-    num_leds: 1
-    rmt_symbols: 48
+    num_leds: 3
     rgb_order: grb
     effects:
       - pulse:
@@ -594,7 +638,7 @@ light:
           transition_length: 100ms
           update_interval: 100ms
           min_brightness: 50%
-          max_brightness: 100%  
+          max_brightness: 100%
 
 button:
   - platform: restart
@@ -625,7 +669,7 @@ button:
 switch:
   - platform: ld2410
     bluetooth:
-      name: "Radar Control Bluetooth"
+      name: "ld2410 Bluetooth"
       id: radar_bluetooth
     engineering_mode:
       name: "Radar Engineering Mode"
@@ -647,6 +691,7 @@ switch:
     optimistic: true
     entity_category: "config"
 
+
 text_sensor:
   - platform: ld2410
     version:
@@ -655,36 +700,101 @@ text_sensor:
 select:
   - platform: ld2410
     distance_resolution:
-      name: "Radar Distance Resolution"
+      name: "ld2410 Gate Size"
       disabled_by_default: true
 
 
 
-#Used To Control RGB Light On Startup. Tells User Status Of Device
-interval:
-  - interval: 1s
+script:
+  - id: testScript      
     then:
-      - if:
-          condition:
-            - binary_sensor.is_off: ink_ha_connected
-            - lambda: 'return id(cycleCounter) < 30;'
-            - switch.is_on: startup_light_blink
-
-          then:
-            - light.toggle:
-                id: rgb_light
-            - lambda: 'id(cycleCounter) += 1;'
-
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            - binary_sensor.is_off: ink_ha_connected
-            - lambda: 'return id(cycleCounter) > 30;'
-            - lambda: 'return id(cycleCounter) < 31;'
-            - switch.is_on: startup_light_blink
-
-          then:
-            - light.turn_off:
-                id: rgb_light
-            - lambda: 'id(cycleCounter) += 1;'
+      if: 
+        condition:
+          - lambda: "return id(runTest) == true;"
+        then:
+          - lambda: "id(runTest) = false;"
+          - lambda: "id(testCycleCount) = 0;"
+          - while:
+              condition:
+                - lambda: "return id(testCycleCount) < 5;"
+              then:
+                - if:
+                    condition:
+                      - lambda: "return id(dps310Passed) == false;"
+                    then:
+                      - if:
+                          condition:
+                            - lambda: "return id(dps310pressure).state > 0;"
+                          then:
+                            - lambda: "id(dps310Passed) = true;"
+                - if:
+                    condition:
+                      - lambda: "return id(ltr390lightPassed) == false;"
+                    then:
+                      - if:
+                          condition:
+                            - lambda: "return id(ltr390light).state > 10;"
+                          then:
+                            - lambda: "id(ltr390lightPassed) = true;"
+                - if:
+                    condition:
+                      - lambda: "return id(ltr390uvindexPassed) == false;"
+                    then:
+                      - if:
+                          condition:
+                            - lambda: "return !isnan(id(ltr390uvindex).state);"
+                          then:
+                            - lambda: "id(ltr390uvindexPassed) = true;"
+                - if:
+                    condition:
+                      - lambda: "return id(ld2410Passed) == false;"
+                    then:
+                      - if:
+                          condition:
+                            - lambda: "return (id(radar_has_target).state == true && id(radar_detection_distance).state > 10);"
+                          then:
+                            - lambda: "id(ld2410Passed) = true;"
+                - if:
+                    condition:
+                      - lambda: "return id(dps310Passed) && id(ltr390lightPassed) && id(ltr390uvindexPassed) && id(ld2410Passed);"
+                    then:
+                      - lambda: "id(testCycleCount) = 10;"
+                - lambda: "id(runTest) = false;"
+                - delay: 1s
+                - lambda: "id(testCycleCount) += 1;"
+          
+          #Check If Test Passed To Trigger Lights
+          - if:
+              condition:
+                - lambda: "return id(dps310Passed) && id(ltr390lightPassed) && id(ltr390uvindexPassed) && id(ld2410Passed);"
+              then:
+                - lambda: "id(runTest) = false;"
+                - light.turn_on:
+                    id: rgb_light
+                    red: 0%
+                    green: 100%
+                    blue: 0%
+                - delay: 5s
+                - light.turn_on:
+                    id: rgb_light
+                    red: 0%
+                    green: 0%
+                    blue: 0%
+                - light.turn_off:
+                    id: rgb_light
+                
+              else:
+                - lambda: "id(runTest) = false;"
+                - light.turn_on:
+                    id: rgb_light
+                    red: 100%
+                    green: 0%
+                    blue: 0%
+                - delay: 5s
+                - light.turn_on:
+                    id: rgb_light
+                    red: 0%
+                    green: 0%
+                    blue: 0%
+                - light.turn_off:
+                    id: rgb_light
