@@ -1,0 +1,39 @@
+esphome:
+  name: apollo-msr-1
+  friendly_name: Apollo Multisensor Mk1 (MSR-1)
+  comment: Apollo Multisensor Mk1 (MSR-1)
+  name_add_mac_suffix: true
+  platformio_options:
+    board_build.flash_mode: dio
+
+  on_boot:
+  - priority: 900.0
+    then:
+      - lambda: |-
+          id(radar_bluetooth).turn_off();
+
+  project:
+    name: "ApolloAutomation.MSR-1_BLE"
+    version: "${version}"
+
+  min_version: 2025.2.0
+
+logger:
+
+dashboard_import:
+  package_import_url: github://ApolloAutomation/MSR-1/Integrations/ESPHome/MSR-1_BLE.yaml
+  import_full_config: false
+
+ota:
+  - platform: esphome
+    password: "apolloautomation"
+
+wifi:
+  ap:
+    ssid: "Apollo MSR1 Hotspot"
+
+bluetooth_proxy:
+  active: true
+
+packages:
+  core: !include Core.yaml
