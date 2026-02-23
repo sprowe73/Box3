@@ -38,4 +38,4 @@ web_server:
   port: 80
 
 packages:
-  core: !include Core.yaml
+  core: !include Appolo-Core.yaml
