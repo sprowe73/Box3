@@ -28,7 +28,7 @@ esphome:
 logger:
   
 dashboard_import:
-  package_import_url: github://sprowe73/box3/MSR-2_BLE.yaml
+  package_import_url: github://sprowe73/box3/MSR-2-BLE.yaml
   import_full_config: false
 
 wifi:
