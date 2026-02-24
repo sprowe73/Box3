@@ -537,7 +537,7 @@ sensor:
   - platform: ltr390
     id: ltr_390
     light:
-      name: "LTR390 Light"
+      name: "LTR390 Light1"
       id: ltr390light
       update_interval: 30s
       filters:
