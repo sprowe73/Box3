@@ -46,4 +46,4 @@ esp32_ble_tracker:
     active: false
 
 packages:
-  core: !include Apollo-Core.yaml
+  core: !include Apollo-Core.yml
