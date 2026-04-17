@@ -1,0 +1,20 @@
+﻿esphome:
+  name: bedroom-s3-clock
+  friendly_name: Bedroom S3 clock
+
+packages: 
+  remote_package_files:
+      url: https://github.com/sprowe73/box3
+      files: Default-Box3.yml
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: egbkXlqGaS1webGdknxxmck4d2EJ5KNKGVYE+7osOfM=
+
+ota:
+  - platform: esphome
+    password: ""
+
+web_server:
+  port: 80
